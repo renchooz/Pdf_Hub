@@ -44,6 +44,17 @@ export const uploadPdf = async (req, res) => {
       studentEmail,
     });
 
+    const uploadsDir = path.join(__dirname, '..', 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    const safeOriginalName = path.parse(req.file.originalname).name.replace(/\s+/g, '_');
+    const localFilename = `${Date.now()}-${safeOriginalName}.pdf`;
+    const localFilePath = path.join(uploadsDir, localFilename);
+
+    await fs.promises.writeFile(localFilePath, watermarkedBuffer);
+
     const bufferToStream = (buffer) => {
       const readable = new Readable();
       readable.push(buffer);
@@ -73,7 +84,7 @@ export const uploadPdf = async (req, res) => {
       originalName: req.file.originalname,
       cloudinaryPublicId: uploadResult.public_id,
       cloudinaryUrl: uploadResult.secure_url,
-      filename: null,
+      filename: localFilename,
       uploadedBy: req.user._id,
     });
 
@@ -104,29 +115,29 @@ export const streamPdf = async (req, res) => {
       device,
     });
 
+    const uploadsDir = path.join(__dirname, '..', 'uploads');
+    const filePath = pdf.filename ? path.join(uploadsDir, pdf.filename) : null;
+
+    if (filePath && fs.existsSync(filePath)) {
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'inline; filename="protected.pdf"',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+        Pragma: 'no-cache',
+        Expires: '0',
+        'X-Content-Type-Options': 'nosniff',
+      });
+
+      const stream = fs.createReadStream(filePath);
+      stream.pipe(res);
+      return;
+    }
+
     if (pdf.cloudinaryUrl) {
       return res.redirect(pdf.cloudinaryUrl);
     }
 
-    // Fallback for any legacy PDFs stored on disk
-    const uploadsDir = path.join(__dirname, '..', 'uploads');
-    const filePath = pdf.filename ? path.join(uploadsDir, pdf.filename) : null;
-
-    if (!filePath || !fs.existsSync(filePath)) {
-      return res.status(404).json({ message: 'File missing' });
-    }
-
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': 'inline; filename="protected.pdf"',
-      'Cache-Control': 'no-store, no-cache, must-revalidate, private',
-      Pragma: 'no-cache',
-      Expires: '0',
-      'X-Content-Type-Options': 'nosniff',
-    });
-
-    const stream = fs.createReadStream(filePath);
-    stream.pipe(res);
+    return res.status(404).json({ message: 'File missing' });
   } catch (error) {
     console.error('Stream PDF error:', error.message);
     res.status(500).json({ message: 'Server error' });
