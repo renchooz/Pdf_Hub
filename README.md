@@ -12,7 +12,8 @@ This project has two parts:
 
 - **Node.js** 18+ (LTS recommended)
 - **npm** (comes with Node)
-- **MongoDB** running locally (default `mongodb://localhost:27017`)
+- A **MongoDB database** (local or Atlas)
+- A **Cloudinary account** (for optional cloud storage/backup of PDFs)
 - **Git** (optional, for version control)
 
 ---
@@ -46,24 +47,26 @@ npm install
 
 3. **Create and configure `.env`**
 
-There is already an example `.env` in `backend/.env`. Adjust values as needed:
+There is already an example file `backend/env.example`. Create `backend/.env` and adjust values as needed:
 
 ```env
 PORT=5000
-MONGO_URI=mongodb://localhost:27017/lms_app
+MONGO_URI=mongodb+srv://<user>:<pass>@<cluster>/<dbName>
 JWT_SECRET=your_strong_secret_here
 ADMIN_EMAIL=your-admin-email@example.com
 FRONTEND_URL=http://localhost:5173
-CLOUDINARY_KEY=
-CLOUDINARY_SECRET=
+
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_KEY=your_cloudinary_api_key
+CLOUDINARY_SECRET=your_cloudinary_api_secret
 ```
 
 - `PORT` – API port (keep `5000` unless you change frontend config).
-- `MONGO_URI` – your MongoDB connection string.
+- `MONGO_URI` – your MongoDB connection string (local or Atlas).
 - `JWT_SECRET` – change to a long random string.
 - `ADMIN_EMAIL` – admin email used for watermark / identification.
 - `FRONTEND_URL` – URL where the Vite dev server or built frontend runs.
-- `CLOUDINARY_*` – optional; leave empty if not using Cloudinary.
+- `CLOUDINARY_*` – Cloudinary credentials used for uploading PDFs as a backup / alternative delivery.
 
 4. **Start the backend in development**
 
@@ -142,7 +145,10 @@ From the **Admin Dashboard** (`/admin`):
   - Choose **Title**.
   - Enter **Student Email** that should receive access and watermark.
   - Upload a **PDF file**.
-  - On success, the API watermarks the PDF (admin + student email) and stores it.
+  - On success:
+    - The API watermarks the PDF (admin + student email).
+    - Saves the watermarked file to `backend/uploads/…` on disk (primary viewer source).
+    - Uploads the same file to Cloudinary (backup / optional delivery).
 
 #### 5.3. Student flow
 
