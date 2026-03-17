@@ -5,8 +5,9 @@ backend/uploads/
 
 # Env files
 *.env
-backend/.env
-frontend/.env
+*.env.*
+**/.env
+**/.env.*
 
 # Logs
 npm-debug.log*
