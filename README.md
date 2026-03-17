@@ -242,3 +242,5 @@ From **frontend/**:
 - `npm run build` – build production bundle.
 - `npm run preview` – preview the production build locally.
 
+Thanks👍
+
