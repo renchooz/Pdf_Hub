@@ -7,7 +7,7 @@ backend/uploads/
 *.env
 *.env.*
 **/.env
-**/.env.*
+
 
 # Logs
 npm-debug.log*
